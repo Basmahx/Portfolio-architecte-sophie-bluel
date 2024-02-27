@@ -10,10 +10,14 @@
 	<meta name="description" content="">
 	<link rel="stylesheet" href="./assets/style.css">
 	<script src="https://kit.fontawesome.com/32eaca69a7.js" crossorigin="anonymous"></script>
-	<script defer src="/FrontEnd/assets/Js/index.js" ></script>
+
 	
 </head>
 <body>
+	<div href="#" class="modeEdition">
+      <i class="fa-regular fa-pen-to-square"> </i>
+      <p>Mode édition</p>
+    </div>
 <header>
 	<h1>Sophie Bluel <span>Architecte d'intérieur</span></h1>
 	<nav class="nav-menu">
@@ -45,19 +49,22 @@
 
 	<section id="portfolio">
 		<div class="wrapper-title">
+			<div class="mes-projet-modifier">
 			<h2>Mes Projets</h2> 
 
 			<!-- button to open modal -->
-			<div id="modifierButton">
+				<div id="modifierButton">
 				
-				<!-- <a href="#" id="openModal">modifier <i id="openModalIcon" class="fa-regular fa-pen-to-square"></i></a> -->
-			  </div>
-			
+					<a href="#" id="openModal"><i id="openModalIcon" class="fa-regular fa-pen-to-square"></i> modifier</a>
+			 	 </div>
+			</div>
+
+
        		 <div id="filters"></div>
 			 
 
 			<!-- the modal -->
-			<aside id="modal-container" class="modal-container" aria-hidden="true">
+			<aside id="modalContainer" class="modal-container" aria-hidden="true">
 				<div class="modal-wrapper">
 					<i id="closeModalIcon" class="fa-solid fa-x close-icon"></i>
 					<h2>Galerie photo</h2>
@@ -102,6 +109,8 @@
 		</ul>
 	</nav>
 </footer>
-<script src="/FrontEnd/assets/Js/modal.js"></script>
+<script defer type="module" src="/FrontEnd/assets/Js/index.js" ></script>
+<scrip defer type="module" src="/FrontEnd/assets/Js/login.js"></scrip>
+<script defer src="/FrontEnd/assets/Js/modal.js"></script>
 </body>
 </html>
