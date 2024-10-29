@@ -1,6 +1,7 @@
 let loggedIn = localStorage.getItem("loginResponse");
 
 if (loggedIn != undefined) {
+  //  à exécuter si loggedIn est défini
   const filters = document.getElementById("filters");
   if (filters) {
     filters.style.display = "none";
@@ -90,7 +91,7 @@ async function generateImagesModal(images, containerId) {
 
     trashCan.addEventListener("click", async (event) => {
       event.preventDefault();
-      await deleteImage(article.id);
+      await deleteImage(article.id); // la fonction deleteImage
       container.removeChild(figure);
     });
   });
@@ -105,10 +106,7 @@ async function fetchDataAndDisplayImagesModal() {
   }
 }
 
-// Call the function when the DOM content is loaded
-window.addEventListener("DOMContentLoaded", function () {
-  fetchDataAndDisplayImagesModal();
-});
+fetchDataAndDisplayImagesModal();
 
 // Delete image function
 async function deleteImage(imageId) {
@@ -147,28 +145,24 @@ function handleDeleteClick(event) {
 
 // switch between the the 1st and the 2nd page in the modal
 
-document.addEventListener("DOMContentLoaded", function () {
-  document
-    .getElementById("toggleContentButton")
-    .addEventListener("click", function () {
-      const galleryContainer = document.getElementById("modalGalleryContainer");
-      const formContainer = document.querySelector(".formContainer2");
+document
+  .getElementById("toggleContentButton")
+  .addEventListener("click", function () {
+    const galleryContainer = document.getElementById("modalGalleryContainer");
+    const formContainer = document.querySelector(".formContainer2");
 
-      // Hide gallery, show form
-      galleryContainer.classList.remove("active");
-      formContainer.classList.add("active");
-    });
+    // Hide gallery, show form
+    galleryContainer.classList.remove("active");
+    formContainer.classList.add("active");
+  });
 
-  document
-    .querySelector(".fa-arrow-left")
-    .addEventListener("click", function () {
-      const galleryContainer = document.getElementById("modalGalleryContainer");
-      const formContainer = document.querySelector(".formContainer2");
+document.querySelector(".fa-arrow-left").addEventListener("click", function () {
+  const galleryContainer = document.getElementById("modalGalleryContainer");
+  const formContainer = document.querySelector(".formContainer2");
 
-      // Hide form, show gallery
-      formContainer.classList.remove("active");
-      galleryContainer.classList.add("active");
-    });
+  // Hide form, show gallery
+  formContainer.classList.remove("active");
+  galleryContainer.classList.add("active");
 });
 
 // add the categories dynamically to the form
@@ -216,22 +210,19 @@ document
   });
 
 //Preview the uploaded image before validating
+document.getElementById("image").addEventListener("change", function () {
+  const file = this.files[0];
+  const reader = new FileReader();
 
-document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("image").addEventListener("change", function () {
-    const file = this.files[0];
-    const reader = new FileReader();
+  reader.onload = function (e) {
+    document
+      .getElementById("previewImage")
+      .setAttribute("src", e.target.result);
+    document.querySelector(".container-add-photo").style.display = "none";
+    document.querySelector(".previewImageDiv").style.display = "block";
+  };
 
-    reader.onload = function (e) {
-      document
-        .getElementById("previewImage")
-        .setAttribute("src", e.target.result);
-      document.querySelector(".container-add-photo").style.display = "none";
-      document.querySelector(".previewImageDiv").style.display = "block";
-    };
-
-    reader.readAsDataURL(file);
-  });
+  reader.readAsDataURL(file);
 });
 
 // the end *◟(ﾟｰﾟ )◞*
