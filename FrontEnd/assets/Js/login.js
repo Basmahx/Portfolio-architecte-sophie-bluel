@@ -1,23 +1,21 @@
-document.addEventListener("DOMContentLoaded", function () {
-  if (document.getElementById("loginForm")) {
-    const loginForm = document.getElementById("loginForm");
-    loginForm.addEventListener("submit", function (event) {
-      event.preventDefault();
+if (document.getElementById("loginForm")) {
+  const loginForm = document.getElementById("loginForm");
+  loginForm.addEventListener("submit", function (event) {
+    event.preventDefault();
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-      if (email.trim() === "" || password.trim() === "") {
-        alert("Veuillez remplir tous les champs");
-        return;
-      }
+    if (email.trim() === "" || password.trim() === "") {
+      alert("Veuillez remplir tous les champs");
+      return;
+    }
 
-      submitLogin(email, password);
-    });
-  } else {
-    console.log("Login form not found on this page");
-  }
-});
+    submitLogin(email, password);
+  });
+} else {
+  console.log("Login form not found on this page");
+}
 
 async function submitLogin(email, password) {
   try {
