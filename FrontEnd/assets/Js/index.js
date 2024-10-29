@@ -14,7 +14,6 @@ function generateImages(images, containerId) {
   const gallery = document.getElementById(containerId);
   gallery.innerHTML = "";
 
-  // Loop through the images array and create HTML elements for each image
   images.forEach((article) => {
     const imageElement = document.createElement("img");
     imageElement.src = article.imageUrl;
@@ -36,7 +35,7 @@ async function fetchDataAndDisplayImages() {
   try {
     const data = await getApi();
     console.log(data);
-    generateImages(data, "galleryContainer"); // Si les données sont récupérées avec succès, on les passe à la fonction generateImages pour générer et afficher les images dans l'élément avec l'ID galleryContainer.
+    generateImages(data, "galleryContainer");
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -65,7 +64,7 @@ async function generateFilters() {
     filterButton.textContent = name;
     filterButton.classList.add("filter-button");
     filterButton.dataset.categoryId = id.toString();
-    filterButton.addEventListener("click", handleFilterClick); // Function call
+    filterButton.addEventListener("click", handleFilterClick);
     filterContainer.appendChild(filterButton);
   });
 
@@ -102,12 +101,10 @@ function createLogoutButton() {
   logoutButton.textContent = "logout";
   logoutButton.href = "#";
 
-  // Add event listener to handle logout action
   logoutButton.addEventListener("click", function (event) {
     event.preventDefault();
-    // Clear the authentication token or any other relevant data from local storage
+    // Clear the authentication token
     localStorage.removeItem("loginResponse");
-    // Redirect to the login page
     window.location.href = "./login.html";
   });
 

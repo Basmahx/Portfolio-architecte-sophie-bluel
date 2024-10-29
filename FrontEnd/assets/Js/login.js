@@ -7,12 +7,11 @@ if (document.getElementById("loginForm")) {
     const password = document.getElementById("password").value;
 
     if (email.trim() === "" || password.trim() === "") {
-      // pour supprimer l'espaces blances
       alert("Veuillez remplir tous les champs");
       return;
     }
 
-    submitLogin(email, password); // faire un appel a la fonction
+    submitLogin(email, password);
   });
 } else {
   console.log("Login form not found on this page");
