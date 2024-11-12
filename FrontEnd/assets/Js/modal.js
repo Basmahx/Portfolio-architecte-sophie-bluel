@@ -1,4 +1,49 @@
-let loggedIn = localStorage.getItem("loginResponse");
+// varibale to retireve data from the local storage
+const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
+
+/// API Functions ///
+
+const postImageAPI = async (e) => {
+  e.preventDefault();
+
+  try {
+    const formData = new FormData(e.target);
+    const response = await fetch("http://localhost:5678/api/works", {
+      method: "POST",
+      body: formData,
+      headers: { Authorization: `Bearer ${loggedIn.token}` },
+    });
+
+    if (!response.ok) throw new Error("Erreur lors de l'envoi du fichier");
+
+    const data = await response.json();
+    console.log("File uploaded successfully:", data);
+  } catch (error) {
+    console.error("Erreur:", error);
+  }
+};
+
+const deleteImage = async (imageId) => {
+  try {
+    const response = await fetch(`http://localhost:5678/api/works/${imageId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${loggedIn.token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete image");
+    }
+
+    console.log("Image deleted successfully");
+  } catch (error) {
+    console.error("Error deleting image:", error);
+  }
+};
+
+/// Authentication Check ///
 
 if (loggedIn != undefined) {
   //  à exécuter si loggedIn est défini
@@ -18,7 +63,9 @@ if (loggedIn != undefined) {
   }
 }
 
+/// Event Listeners and DOM Manipulation Functions ///
 //to openModal
+
 const openModal = function (e) {
   e.preventDefault();
   const targetId = e.target.getAttribute("href");
@@ -42,7 +89,7 @@ document.querySelectorAll(".js-modal").forEach((a) => {
 function hideModal() {
   const modalContainer = document.getElementById("modalContainer");
   modalContainer.style.display = "none";
-  localStorage.removeItem("modalOpen"); // Remove modal state from storage
+  localStorage.removeItem("modalOpen");
 }
 
 const closeModalIcon = document.getElementById("closeModalIcon");
@@ -108,28 +155,6 @@ async function fetchDataAndDisplayImagesModal() {
 
 fetchDataAndDisplayImagesModal();
 
-// Delete image function
-async function deleteImage(imageId) {
-  try {
-    const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
-    const response = await fetch(`http://localhost:5678/api/works/${imageId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${loggedIn.token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to delete image");
-    }
-
-    console.log("Image deleted successfully");
-  } catch (error) {
-    console.error("Error deleting image:", error);
-  }
-}
-
 // Event listener for delete image click
 function handleDeleteClick(event) {
   event.preventDefault();
@@ -165,13 +190,7 @@ document.querySelector(".fa-arrow-left").addEventListener("click", function () {
   galleryContainer.classList.add("active");
 });
 
-// add the categories dynamically to the form
-
-async function getCategory() {
-  const response = await fetch("http://localhost:5678/api/categories");
-  const data = await response.json();
-  return data;
-}
+// display categories dynamically
 
 async function displayCategoryModal() {
   const select = document.getElementById("categoryInput");
@@ -185,36 +204,13 @@ async function displayCategoryModal() {
 }
 displayCategoryModal();
 
-// Event listener for form submission to add photo
-document
-  .getElementById("formAddPhoto")
-  .addEventListener("submit", async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData(e.target);
-      const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
-      const response = await fetch("http://localhost:5678/api/works", {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${loggedIn.token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'envoi du fichier");
-      }
-      const data = await response.json();
-    } catch (error) {
-      console.error("Erreur :", error);
-    }
-  });
-
 //Preview the uploaded image before validating
-document.getElementById("image").addEventListener("change", function () {
-  const file = this.files[0];
+function previewImage() {
+  const file = document.getElementById("image").files[0]; // Pour accéder aux éléments d'un tableau JSON, utilisez l'indice (0-indexé).
   const reader = new FileReader();
 
   reader.onload = function (e) {
+    // Set the preview image source to the file data
     document
       .getElementById("previewImage")
       .setAttribute("src", e.target.result);
@@ -222,7 +218,13 @@ document.getElementById("image").addEventListener("change", function () {
     document.querySelector(".previewImageDiv").style.display = "block";
   };
 
-  reader.readAsDataURL(file);
-});
+  if (file) {
+    reader.readAsDataURL(file); // Start reading the file data
+  }
+}
 
-// the end *◟(ﾟｰﾟ )◞*
+document.getElementById("image").addEventListener("change", previewImage);
+
+document
+  .getElementById("formAddPhoto")
+  .addEventListener("submit", postImageAPI);

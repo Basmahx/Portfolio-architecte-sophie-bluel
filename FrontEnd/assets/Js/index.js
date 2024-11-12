@@ -1,3 +1,5 @@
+// API Functions //
+
 const getApi = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
@@ -10,6 +12,18 @@ const getApi = async () => {
   }
 };
 
+const getCategory = async () => {
+  try {
+    const response = await fetch("http://localhost:5678/api/categories");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw error;
+  }
+};
+
+/// Event Listeners and DOM Manipulation Functions ///
 function generateImages(images, containerId) {
   const gallery = document.getElementById(containerId);
   gallery.innerHTML = "";
@@ -46,17 +60,18 @@ fetchDataAndDisplayImages();
 // Filters
 
 async function generateFilters() {
-  async function getCategory() {
-    const response = await fetch("http://localhost:5678/api/categories");
-    const data = await response.json();
-    return data;
-  }
-
   const categories = await getCategory();
 
   const portfolioSection = document.getElementById("filters");
   const filterContainer = document.createElement("div");
   filterContainer.classList.add("filter-container");
+
+  const tous = document.createElement("button");
+  tous.textContent = "Tous";
+  tous.classList.add("filter-button");
+  tous.dataset.categoryId = "0";
+  tous.addEventListener("click", handleFilterClick);
+  filterContainer.appendChild(tous);
 
   categories.forEach((category) => {
     const { name, id } = category;
