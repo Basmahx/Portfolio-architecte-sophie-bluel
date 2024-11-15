@@ -1,11 +1,16 @@
+let works = [];
+
 // API Functions //
 
-const getApi = async () => {
+const getImages = async () => {
   try {
     const response = await fetch("http://localhost:5678/api/works");
     const data = await response.json();
 
-    return data;
+    works = data; // Assign the fetched data to works
+    localStorage.setItem("works", JSON.stringify(works));
+
+    return works; // Return the updated works array
   } catch (error) {
     console.error("Error fetching data:", error);
     throw error;
@@ -14,11 +19,61 @@ const getApi = async () => {
 
 const getCategory = async () => {
   try {
+    // Check if categories are already in local storage
+    const storedCategories = localStorage.getItem("categories");
+    if (storedCategories) {
+      return JSON.parse(storedCategories);
+    }
+
+    // Fetch categories from the API if not in local storage
     const response = await fetch("http://localhost:5678/api/categories");
     const data = await response.json();
+
+    // Store categories in local storage
+    localStorage.setItem("categories", JSON.stringify(data));
     return data;
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching categories:", error);
+    throw error;
+  }
+};
+
+// mediator functions to retrive data from local storage //
+
+const getWorksData = async () => {
+  try {
+    const storedWorks = localStorage.getItem("works");
+
+    if (storedWorks) {
+      return JSON.parse(storedWorks);
+    } else {
+      throw new Error("No data in local storage.");
+    }
+  } catch (error) {
+    console.warn("Local storage retrieval failed; falling back to API:", error);
+
+    // Fallback to API and store the data in local storage
+    const data = await getImages();
+    localStorage.setItem("works", JSON.stringify(data));
+
+    return data;
+  }
+};
+
+// Mediator function to retrieve categories
+const getCategoriesData = async () => {
+  try {
+    // Check if categories are already in local storage
+    const storedCategories = localStorage.getItem("categories");
+    if (storedCategories) {
+      return JSON.parse(storedCategories);
+    }
+
+    // If not in local storage, call the API function
+    const data = await getCategory(); // This fetches from the API
+    return data;
+  } catch (error) {
+    console.error("Error retrieving categories:", error);
     throw error;
   }
 };
@@ -44,11 +99,10 @@ function generateImages(images, containerId) {
     gallery.appendChild(sectionFigure);
   });
 }
-
+// localStorage.removeItem("works");
 async function fetchDataAndDisplayImages() {
   try {
-    const data = await getApi();
-    console.log(data);
+    const data = await getWorksData();
     generateImages(data, "galleryContainer");
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -59,10 +113,9 @@ fetchDataAndDisplayImages();
 
 // Filters
 
-async function generateFilters() {
-  const categories = await getCategory();
-
+async function generateFilters(categories) {
   const portfolioSection = document.getElementById("filters");
+  portfolioSection.innerHTML = "";
   const filterContainer = document.createElement("div");
   filterContainer.classList.add("filter-container");
 
@@ -102,8 +155,16 @@ function handleFilterClick(event) {
 }
 
 async function initialize() {
-  await fetchDataAndDisplayImages();
-  generateFilters();
+  try {
+    const [works, categories] = await Promise.all([
+      getWorksData(),
+      getCategoriesData(),
+    ]);
+    generateImages(works, "galleryContainer");
+    generateFilters(categories);
+  } catch (error) {
+    console.error("Error initializing page:", error);
+  }
 }
 
 initialize();
