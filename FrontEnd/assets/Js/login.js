@@ -3,7 +3,7 @@ if (document.getElementById("loginForm")) {
   loginForm.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    const email = document.getElementById("email").value;
+    const email = document.getElementById("email").value; // value : récuperer la valeur saisie par l'utilisateur sur la page web
     const password = document.getElementById("password").value;
 
     if (email.trim() === "" || password.trim() === "") {
@@ -34,12 +34,15 @@ async function submitLogin(email, password) {
       const data = await loginResponse.json();
       localStorage.setItem("loginResponse", JSON.stringify(data));
       document.location.href = "index.html";
-    } else if (loginResponse.status === 404) {
-      document.getElementById("errorMessage").textContent =
-        "Utilisateur non trouvé";
     } else if (loginResponse.status === 401) {
       document.getElementById("errorMessage").textContent =
         "Nom d'utilisateur ou mot de passe incorrect";
+    } else if (loginResponse.status === 404) {
+      document.getElementById("errorMessage").textContent =
+        "Utilisateur non trouvé";
+    } else if (loginResponse.status === 500) {
+      document.getElementById("errorMessage").textContent =
+        "Erreur serveur, veuillez réessayer plus tard";
     } else {
       document.getElementById("errorMessage").textContent =
         "Erreur lors de la connexion: " + loginResponse.status;

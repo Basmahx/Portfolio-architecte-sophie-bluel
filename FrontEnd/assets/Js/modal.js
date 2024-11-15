@@ -1,4 +1,37 @@
-let loggedIn = localStorage.getItem("loginResponse");
+// varibale to retireve data from the local storage
+const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
+
+/// API Functions ///
+
+const postImageAPI = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(formAddPhoto);
+  try {
+    // const formData = new FormData(e.target);
+    const response = await fetch("http://localhost:5678/api/works", {
+      method: "POST",
+      body: formData,
+      headers: { Authorization: `Bearer ${loggedIn.token}` },
+    });
+
+    if (!response.ok) throw new Error("Erreur lors de l'envoi du fichier");
+
+    const data = await response.json();
+    console.log("File uploaded successfully:", data);
+
+    // Update local storage with new data
+    const works = JSON.parse(localStorage.getItem("works")) || [];
+    works.push(data); // Add new image data to the existing array
+    localStorage.setItem("works", JSON.stringify(works));
+
+    // Refresh the displayed images
+    fetchDataAndDisplayImagesModal();
+  } catch (error) {
+    console.error("Erreur:", error);
+  }
+};
+
+/// Authentication Check ///
 
 if (loggedIn != undefined) {
   //  à exécuter si loggedIn est défini
@@ -18,31 +51,31 @@ if (loggedIn != undefined) {
   }
 }
 
+/// Event Listeners and DOM Manipulation Functions ///
 //to openModal
+
 const openModal = function (e) {
   e.preventDefault();
-  const targetId = e.target.getAttribute("href");
-  const target = document.querySelector(targetId);
-  if (target) {
-    target.style.display = "flex";
-    target.removeAttribute("aria-hidden");
-    target.setAttribute("aria-modal", "true");
+
+  const modalContainer = document.getElementById("modalContainer");
+  if (modalContainer) {
+    modalContainer.style.display = "flex";
+    modalContainer.removeAttribute("aria-hidden");
+    modalContainer.setAttribute("aria-modal", "true");
     localStorage.setItem("modalOpen", "true");
   } else {
-    console.error("Modal target not found:", targetId);
+    console.error("Modal container not found");
   }
 };
 
-document.querySelectorAll(".js-modal").forEach((a) => {
-  a.addEventListener("click", openModal);
-});
+document.querySelector("#modifierButton").addEventListener("click", openModal);
 
 //to close the modal
 
 function hideModal() {
   const modalContainer = document.getElementById("modalContainer");
   modalContainer.style.display = "none";
-  localStorage.removeItem("modalOpen"); // Remove modal state from storage
+  localStorage.removeItem("modalOpen");
 }
 
 const closeModalIcon = document.getElementById("closeModalIcon");
@@ -56,7 +89,6 @@ document.addEventListener("click", function (e) {
   }
 });
 
-// Check if modal state is stored in local storage
 const isModalOpen = localStorage.getItem("modalOpen");
 
 // If modal state is stored and true, open the modal
@@ -69,8 +101,9 @@ if (isModalOpen === "true") {
 
 // to generate images for the modal
 
-async function generateImagesModal(images, containerId) {
+function generateImagesModal(images, containerId) {
   const container = document.getElementById(containerId);
+  container.innerHTML = "";
   images.forEach((article) => {
     const imageElement = document.createElement("img");
     imageElement.src = article.imageUrl;
@@ -88,58 +121,57 @@ async function generateImagesModal(images, containerId) {
     figure.appendChild(span);
 
     container.appendChild(figure);
-
-    trashCan.addEventListener("click", async (event) => {
-      event.preventDefault();
-      await deleteImage(article.id); // la fonction deleteImage
-      container.removeChild(figure);
-    });
+    trashCan.addEventListener("click", handleDeleteClick);
   });
 }
 
-async function fetchDataAndDisplayImagesModal() {
+function fetchDataAndDisplayImagesModal() {
   try {
-    const data = await getApi();
+    const data = JSON.parse(localStorage.getItem("works")) || [];
     generateImagesModal(data, "modalGallery");
   } catch (error) {
-    console.error("Error fetching data:", error);
+    console.error("Error retrieving data from local storage:", error);
   }
 }
 
 fetchDataAndDisplayImagesModal();
 
-// Delete image function
-async function deleteImage(imageId) {
-  try {
-    const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
-    const response = await fetch(`http://localhost:5678/api/works/${imageId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${loggedIn.token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to delete image");
-    }
-
-    console.log("Image deleted successfully");
-  } catch (error) {
-    console.error("Error deleting image:", error);
-  }
-}
-
-// Event listener for delete image click
-function handleDeleteClick(event) {
+async function handleDeleteClick(event) {
   event.preventDefault();
   const trashCan = event.target;
   const articleId = trashCan.getAttribute("data-image-id");
-  const figure = trashCan.closest("figure");
-  if (articleId && figure) {
-    deleteImage(articleId)
-      .then(() => figure.remove())
-      .catch((error) => console.error("Error deleting image:", error));
+
+  if (articleId) {
+    try {
+      const response = await fetch(
+        `http://localhost:5678/api/works/${articleId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${loggedIn.token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Update local storage
+        let works = JSON.parse(localStorage.getItem("works"));
+        works = works.filter((work) => work.id !== parseInt(articleId));
+        localStorage.setItem("works", JSON.stringify(works));
+
+        const imageElement = trashCan.closest("figure");
+        if (imageElement) {
+          imageElement.remove();
+        }
+
+        fetchDataAndDisplayImagesModal();
+      } else {
+        console.error("Error deleting image:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    }
   }
 }
 
@@ -165,17 +197,11 @@ document.querySelector(".fa-arrow-left").addEventListener("click", function () {
   galleryContainer.classList.add("active");
 });
 
-// add the categories dynamically to the form
-
-async function getCategory() {
-  const response = await fetch("http://localhost:5678/api/categories");
-  const data = await response.json();
-  return data;
-}
+// display categories dynamically
 
 async function displayCategoryModal() {
   const select = document.getElementById("categoryInput");
-  const categories = await getCategory();
+  const categories = await getCategoriesData();
   categories.forEach((category) => {
     const option = document.createElement("option");
     option.value = category.id;
@@ -185,36 +211,13 @@ async function displayCategoryModal() {
 }
 displayCategoryModal();
 
-// Event listener for form submission to add photo
-document
-  .getElementById("formAddPhoto")
-  .addEventListener("submit", async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData(e.target);
-      const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
-      const response = await fetch("http://localhost:5678/api/works", {
-        method: "POST",
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${loggedIn.token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'envoi du fichier");
-      }
-      const data = await response.json();
-    } catch (error) {
-      console.error("Erreur :", error);
-    }
-  });
-
 //Preview the uploaded image before validating
-document.getElementById("image").addEventListener("change", function () {
-  const file = this.files[0];
+function previewImage() {
+  const file = document.getElementById("image").files[0]; // Pour accéder aux éléments d'un tableau JSON, utilisez l'indice (0-indexé).
   const reader = new FileReader();
 
   reader.onload = function (e) {
+    // Set the preview image source to the file data
     document
       .getElementById("previewImage")
       .setAttribute("src", e.target.result);
@@ -222,7 +225,13 @@ document.getElementById("image").addEventListener("change", function () {
     document.querySelector(".previewImageDiv").style.display = "block";
   };
 
-  reader.readAsDataURL(file);
-});
+  if (file) {
+    reader.readAsDataURL(file); // Start reading the file data
+  }
+}
 
-// the end *◟(ﾟｰﾟ )◞*
+document.getElementById("image").addEventListener("change", previewImage);
+
+document
+  .getElementById("formAddPhoto")
+  .addEventListener("submit", postImageAPI);

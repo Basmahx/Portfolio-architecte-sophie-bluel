@@ -421,9 +421,10 @@ footer nav ul {
   margin-top: -2em;
   margin-left: 2em;
   display: none;
+  cursor: pointer;
 }
 
-#modifierButton a {
+#modalOpen {
   text-decoration: none;
   color: inherit;
 }
