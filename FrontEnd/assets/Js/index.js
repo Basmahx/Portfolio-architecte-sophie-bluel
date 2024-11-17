@@ -1,5 +1,3 @@
-let works = [];
-
 // API Functions //
 
 const getImages = async () => {
@@ -25,11 +23,10 @@ const getCategory = async () => {
       return JSON.parse(storedCategories);
     }
 
-    // Fetch categories from the API if not in local storage
     const response = await fetch("http://localhost:5678/api/categories");
     const data = await response.json();
 
-    // Store categories in local storage
+    // Store in local storage
     localStorage.setItem("categories", JSON.stringify(data));
     return data;
   } catch (error) {
@@ -38,47 +35,8 @@ const getCategory = async () => {
   }
 };
 
-// mediator functions to retrive data from local storage //
-
-const getWorksData = async () => {
-  try {
-    const storedWorks = localStorage.getItem("works");
-
-    if (storedWorks) {
-      return JSON.parse(storedWorks);
-    } else {
-      throw new Error("No data in local storage.");
-    }
-  } catch (error) {
-    console.warn("Local storage retrieval failed; falling back to API:", error);
-
-    // Fallback to API and store the data in local storage
-    const data = await getImages();
-    localStorage.setItem("works", JSON.stringify(data));
-
-    return data;
-  }
-};
-
-// Mediator function to retrieve categories
-const getCategoriesData = async () => {
-  try {
-    // Check if categories are already in local storage
-    const storedCategories = localStorage.getItem("categories");
-    if (storedCategories) {
-      return JSON.parse(storedCategories);
-    }
-
-    // If not in local storage, call the API function
-    const data = await getCategory(); // This fetches from the API
-    return data;
-  } catch (error) {
-    console.error("Error retrieving categories:", error);
-    throw error;
-  }
-};
-
 /// Event Listeners and DOM Manipulation Functions ///
+
 function generateImages(images, containerId) {
   const gallery = document.getElementById(containerId);
   gallery.innerHTML = "";
@@ -100,16 +58,17 @@ function generateImages(images, containerId) {
   });
 }
 // localStorage.removeItem("works");
-async function fetchDataAndDisplayImages() {
+async function showImages() {
   try {
-    const data = await getWorksData();
+    const data =
+      JSON.parse(localStorage.getItem("works")) || (await getImages());
     generateImages(data, "galleryContainer");
   } catch (error) {
     console.error("Error fetching data:", error);
   }
 }
 
-fetchDataAndDisplayImages();
+showImages();
 
 // Filters
 
@@ -146,7 +105,6 @@ function handleFilterClick(event) {
   allImages.forEach((image) => {
     const imageCategory = image.dataset.categoryId;
     if (categoryId === "0" || imageCategory === categoryId) {
-      // va récuperer les id des images
       image.parentElement.style.display = "block";
     } else {
       image.parentElement.style.display = "none";
@@ -154,20 +112,16 @@ function handleFilterClick(event) {
   });
 }
 
-async function initialize() {
+async function showCategories() {
   try {
-    const [works, categories] = await Promise.all([
-      getWorksData(),
-      getCategoriesData(),
-    ]);
-    generateImages(works, "galleryContainer");
+    const categories = await getCategory();
     generateFilters(categories);
   } catch (error) {
-    console.error("Error initializing page:", error);
+    console.error("Error fetching categories:", error);
   }
 }
 
-initialize();
+showCategories();
 
 // Logout
 
@@ -179,7 +133,7 @@ function createLogoutButton() {
 
   logoutButton.addEventListener("click", function (event) {
     event.preventDefault();
-    // Clear the authentication token
+    // remove the authentication token
     localStorage.removeItem("loginResponse");
     window.location.href = "./login.html";
   });

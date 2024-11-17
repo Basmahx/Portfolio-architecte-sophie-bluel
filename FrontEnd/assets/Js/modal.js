@@ -1,35 +1,10 @@
-// varibale to retireve data from the local storage
+// retireve from the local storage
 const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
 
-/// API Functions ///
-
-const postImageAPI = async (e) => {
-  e.preventDefault();
-  const formData = new FormData(formAddPhoto);
-  try {
-    // const formData = new FormData(e.target);
-    const response = await fetch("http://localhost:5678/api/works", {
-      method: "POST",
-      body: formData,
-      headers: { Authorization: `Bearer ${loggedIn.token}` },
-    });
-
-    if (!response.ok) throw new Error("Erreur lors de l'envoi du fichier");
-
-    const data = await response.json();
-    console.log("File uploaded successfully:", data);
-
-    // Update local storage with new data
-    const works = JSON.parse(localStorage.getItem("works")) || [];
-    works.push(data); // Add new image data to the existing array
-    localStorage.setItem("works", JSON.stringify(works));
-
-    // Refresh the displayed images
-    fetchDataAndDisplayImagesModal();
-  } catch (error) {
-    console.error("Erreur:", error);
-  }
-};
+// global variables
+const modalContainer = document.getElementById("modalContainer");
+const galleryContainer = document.getElementById("modalGalleryContainer");
+const formContainer = document.querySelector(".formContainer2");
 
 /// Authentication Check ///
 
@@ -51,13 +26,10 @@ if (loggedIn != undefined) {
   }
 }
 
-/// Event Listeners and DOM Manipulation Functions ///
-//to openModal
+//to open and close the modal
 
 const openModal = function (e) {
   e.preventDefault();
-
-  const modalContainer = document.getElementById("modalContainer");
   if (modalContainer) {
     modalContainer.style.display = "flex";
     modalContainer.removeAttribute("aria-hidden");
@@ -70,22 +42,10 @@ const openModal = function (e) {
 
 document.querySelector("#modifierButton").addEventListener("click", openModal);
 
-//to close the modal
-
-function hideModal() {
-  const modalContainer = document.getElementById("modalContainer");
-  modalContainer.style.display = "none";
-  localStorage.removeItem("modalOpen");
-}
-
-const closeModalIcon = document.getElementById("closeModalIcon");
-closeModalIcon.addEventListener("click", hideModal);
-
-// Event listener for closing modal when clicking outside
 document.addEventListener("click", function (e) {
-  const modalContainer = document.getElementById("modalContainer");
-  if (e.target === modalContainer) {
-    hideModal();
+  if (e.target === closeModalIcon || e.target === modalContainer) {
+    modalContainer.style.display = "none";
+    localStorage.removeItem("modalOpen");
   }
 });
 
@@ -93,7 +53,6 @@ const isModalOpen = localStorage.getItem("modalOpen");
 
 // If modal state is stored and true, open the modal
 if (isModalOpen === "true") {
-  const modalContainer = document.getElementById("modalContainer");
   modalContainer.style.display = "flex";
   modalContainer.removeAttribute("aria-hidden");
   modalContainer.setAttribute("aria-modal", "true");
@@ -125,20 +84,65 @@ function generateImagesModal(images, containerId) {
   });
 }
 
-function fetchDataAndDisplayImagesModal() {
+async function showImagesModal() {
   try {
-    const data = JSON.parse(localStorage.getItem("works")) || [];
+    const data =
+      JSON.parse(localStorage.getItem("works")) || (await getImages());
     generateImagesModal(data, "modalGallery");
   } catch (error) {
     console.error("Error retrieving data from local storage:", error);
   }
 }
 
-fetchDataAndDisplayImagesModal();
+showImagesModal();
 
-async function handleDeleteClick(event) {
-  event.preventDefault();
-  const trashCan = event.target;
+// display categories dynamically
+
+async function showCategoriesModal() {
+  const select = document.getElementById("categoryInput");
+  const categories = await getCategory();
+  categories.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.textContent = category.name;
+    select.appendChild(option);
+  });
+}
+showCategoriesModal();
+
+//// API functions post & delete ////
+
+const postImageAPI = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(formAddPhoto);
+  try {
+    const response = await fetch("http://localhost:5678/api/works", {
+      method: "POST",
+      body: formData,
+      headers: { Authorization: `Bearer ${loggedIn.token}` },
+    });
+
+    if (!response.ok) throw new Error("Erreur lors de l'envoi du fichier");
+
+    const data = await response.json();
+    console.log("File uploaded successfully:", data);
+
+    // Update local storage
+    const works = JSON.parse(localStorage.getItem("works")) || [];
+    works.push(data);
+    localStorage.setItem("works", JSON.stringify(works));
+
+    showImagesModal();
+    showImages();
+    goToGalleryPage();
+  } catch (error) {
+    console.error("Erreur:", error);
+  }
+};
+
+async function handleDeleteClick(e) {
+  e.preventDefault();
+  const trashCan = e.target;
   const articleId = trashCan.getAttribute("data-image-id");
 
   if (articleId) {
@@ -165,7 +169,8 @@ async function handleDeleteClick(event) {
           imageElement.remove();
         }
 
-        fetchDataAndDisplayImagesModal();
+        showImagesModal();
+        showImages();
       } else {
         console.error("Error deleting image:", await response.text());
       }
@@ -180,36 +185,20 @@ async function handleDeleteClick(event) {
 document
   .getElementById("toggleContentButton")
   .addEventListener("click", function () {
-    const galleryContainer = document.getElementById("modalGalleryContainer");
-    const formContainer = document.querySelector(".formContainer2");
-
     // Hide gallery, show form
     galleryContainer.classList.remove("active");
     formContainer.classList.add("active");
   });
 
-document.querySelector(".fa-arrow-left").addEventListener("click", function () {
-  const galleryContainer = document.getElementById("modalGalleryContainer");
-  const formContainer = document.querySelector(".formContainer2");
-
+function goToGalleryPage() {
   // Hide form, show gallery
   formContainer.classList.remove("active");
   galleryContainer.classList.add("active");
-});
-
-// display categories dynamically
-
-async function displayCategoryModal() {
-  const select = document.getElementById("categoryInput");
-  const categories = await getCategoriesData();
-  categories.forEach((category) => {
-    const option = document.createElement("option");
-    option.value = category.id;
-    option.textContent = category.name;
-    select.appendChild(option);
-  });
 }
-displayCategoryModal();
+
+document
+  .querySelector(".fa-arrow-left")
+  .addEventListener("click", goToGalleryPage);
 
 //Preview the uploaded image before validating
 function previewImage() {
@@ -231,7 +220,6 @@ function previewImage() {
 }
 
 document.getElementById("image").addEventListener("change", previewImage);
-
 document
   .getElementById("formAddPhoto")
   .addEventListener("submit", postImageAPI);
