@@ -1,74 +1,37 @@
-// API Functions //
+export let works = [];
+let categories = [];
 
-const getImages = async () => {
+export async function generateImages() {
   try {
     const response = await fetch("http://localhost:5678/api/works");
     const data = await response.json();
 
-    works = data; // Assign the fetched data to works
-    localStorage.setItem("works", JSON.stringify(works));
+    works = data; // Store fetched data in the 'works' array
+    const gallery = document.getElementById("galleryContainer");
+    gallery.innerHTML = ""; // Clear current gallery
 
-    return works; // Return the updated works array
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    throw error;
-  }
-};
+    works.forEach((article) => {
+      const imageElement = document.createElement("img");
+      imageElement.src = article.imageUrl;
+      imageElement.alt = article.title;
+      imageElement.dataset.categoryId = article.categoryId;
 
-const getCategory = async () => {
-  try {
-    // Check if categories are already in local storage
-    const storedCategories = localStorage.getItem("categories");
-    if (storedCategories) {
-      return JSON.parse(storedCategories);
-    }
+      const figCaptionElement = document.createElement("figcaption");
+      figCaptionElement.innerText = article.title;
 
-    const response = await fetch("http://localhost:5678/api/categories");
-    const data = await response.json();
+      // Create a figure element to contain the image and its caption
+      const sectionFigure = document.createElement("figure");
+      sectionFigure.appendChild(imageElement);
+      sectionFigure.appendChild(figCaptionElement);
 
-    // Store in local storage
-    localStorage.setItem("categories", JSON.stringify(data));
-    return data;
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw error;
-  }
-};
-
-/// Event Listeners and DOM Manipulation Functions ///
-
-function generateImages(images, containerId) {
-  const gallery = document.getElementById(containerId);
-  gallery.innerHTML = "";
-
-  images.forEach((article) => {
-    const imageElement = document.createElement("img");
-    imageElement.src = article.imageUrl;
-    imageElement.alt = article.title;
-    imageElement.dataset.categoryId = article.categoryId;
-    const figCaptionElement = document.createElement("figcaption");
-    figCaptionElement.innerText = article.title;
-
-    // Create a figure element to contain the image and its caption
-    const sectionFigure = document.createElement("figure");
-    sectionFigure.appendChild(imageElement);
-    sectionFigure.appendChild(figCaptionElement);
-
-    gallery.appendChild(sectionFigure);
-  });
-}
-// localStorage.removeItem("works");
-async function showImages() {
-  try {
-    const data =
-      JSON.parse(localStorage.getItem("works")) || (await getImages());
-    generateImages(data, "galleryContainer");
+      gallery.appendChild(sectionFigure);
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
 }
 
-showImages();
+generateImages();
 
 // Filters
 
@@ -114,10 +77,13 @@ function handleFilterClick(event) {
 
 async function showCategories() {
   try {
-    const categories = await getCategory();
-    generateFilters(categories);
+    // Fetch categories if the array is empty
+    const response = await fetch("http://localhost:5678/api/categories");
+    const data = await response.json();
+    categories = data;
+    generateFilters(categories); // Dynamically generate filters after fetching
   } catch (error) {
-    console.error("Error fetching categories:", error);
+    console.error("Error displaying categories:", error);
   }
 }
 
