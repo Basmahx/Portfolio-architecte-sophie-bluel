@@ -484,10 +484,8 @@ hr {
 }
 
 button {
-  border: 1px #1d6154 solid;
   border-radius: 60px;
   color: #fff;
-  background: #1d6154;
   height: 28px;
   width: 237px;
   font-family: "Syne", sans-serif;
@@ -498,6 +496,7 @@ button {
   cursor: pointer;
   margin-left: auto;
   margin-right: auto;
+  border-width: 0;
 }
 
 button:hover {
@@ -509,6 +508,12 @@ button:hover {
   align-items: center;
   display: flex;
   bottom: 10px;
+  border: 1px #1d6154 solid;
+  background: #1d6154;
+}
+
+.button-add-photo-form {
+  background-color: #a7a7a7;
 }
 
 .modal-gallery {

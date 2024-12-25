@@ -1,15 +1,20 @@
-// retireve from the local storage
+import { generateImages, works } from "./index.js";
+
+// retireve login response from the local storage
 const loggedIn = JSON.parse(localStorage.getItem("loginResponse"));
 
 // global variables
 const modalContainer = document.getElementById("modalContainer");
 const galleryContainer = document.getElementById("modalGalleryContainer");
 const formContainer = document.querySelector(".formContainer2");
+const closeModalIcon = document.getElementById("closeModalIcon");
+const titleInput = document.getElementById("title");
+const imageInput = document.getElementById("image");
+const submitButton = document.querySelector(".button-add-photo-form");
 
 /// Authentication Check ///
 
 if (loggedIn != undefined) {
-  //  à exécuter si loggedIn est défini
   const filters = document.getElementById("filters");
   if (filters) {
     filters.style.display = "none";
@@ -26,91 +31,85 @@ if (loggedIn != undefined) {
   }
 }
 
-//to open and close the modal
+// Event listener for opening the modal
+document
+  .querySelector("#modifierButton")
+  .addEventListener("click", function (e) {
+    e.preventDefault();
+    if (modalContainer) {
+      modalContainer.style.display = "flex"; // Show the modal
+      modalContainer.removeAttribute("aria-hidden");
+      modalContainer.setAttribute("aria-modal", "true");
+    } else {
+      console.error("Modal container not found");
+    }
+  });
 
-const openModal = function (e) {
-  e.preventDefault();
-  if (modalContainer) {
-    modalContainer.style.display = "flex";
-    modalContainer.removeAttribute("aria-hidden");
-    modalContainer.setAttribute("aria-modal", "true");
-    localStorage.setItem("modalOpen", "true");
-  } else {
-    console.error("Modal container not found");
-  }
-};
-
-document.querySelector("#modifierButton").addEventListener("click", openModal);
-
+// Event listener for closing the modal
 document.addEventListener("click", function (e) {
   if (e.target === closeModalIcon || e.target === modalContainer) {
-    modalContainer.style.display = "none";
-    localStorage.removeItem("modalOpen");
+    modalContainer.style.display = "none"; // Hide the modal
+    modalContainer.setAttribute("aria-hidden", "true");
+    modalContainer.removeAttribute("aria-modal");
   }
 });
 
-const isModalOpen = localStorage.getItem("modalOpen");
-
-// If modal state is stored and true, open the modal
-if (isModalOpen === "true") {
-  modalContainer.style.display = "flex";
-  modalContainer.removeAttribute("aria-hidden");
-  modalContainer.setAttribute("aria-modal", "true");
-}
-
-// to generate images for the modal
-
-function generateImagesModal(images, containerId) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = "";
-  images.forEach((article) => {
-    const imageElement = document.createElement("img");
-    imageElement.src = article.imageUrl;
-    imageElement.alt = article.title;
-
-    const figure = document.createElement("figure");
-    figure.appendChild(imageElement);
-
-    const span = document.createElement("span");
-    const trashCan = document.createElement("i");
-    trashCan.classList.add("fa-solid", "fa-trash-can");
-    trashCan.setAttribute("data-image-id", article.id); // Set data-image-id attribute
-
-    span.appendChild(trashCan);
-    figure.appendChild(span);
-
-    container.appendChild(figure);
-    trashCan.addEventListener("click", handleDeleteClick);
-  });
-}
-
-async function showImagesModal() {
+// generate images
+async function generateImagesModal() {
   try {
-    const data =
-      JSON.parse(localStorage.getItem("works")) || (await getImages());
-    generateImagesModal(data, "modalGallery");
+    const response = await fetch("http://localhost:5678/api/works");
+    const works = await response.json();
+    const gallery = document.getElementById("modalGallery");
+    gallery.innerHTML = "";
+    // Loop to create elements
+    works.forEach((article) => {
+      const imageElement = document.createElement("img");
+      imageElement.src = article.imageUrl;
+      imageElement.alt = article.title;
+
+      const figure = document.createElement("figure");
+      figure.appendChild(imageElement);
+
+      const span = document.createElement("span");
+      const trashCan = document.createElement("i");
+      trashCan.classList.add("fa-solid", "fa-trash-can");
+      trashCan.setAttribute("data-image-id", article.id); // Set data-image-id attribute for the delete button
+
+      span.appendChild(trashCan);
+      figure.appendChild(span);
+      gallery.appendChild(figure);
+
+      trashCan.addEventListener("click", handleDeleteClick);
+    });
   } catch (error) {
-    console.error("Error retrieving data from local storage:", error);
+    console.error("Error fetching data:", error);
   }
 }
 
-showImagesModal();
+generateImagesModal();
 
 // display categories dynamically
 
 async function showCategoriesModal() {
   const select = document.getElementById("categoryInput");
-  const categories = await getCategory();
-  categories.forEach((category) => {
-    const option = document.createElement("option");
-    option.value = category.id;
-    option.textContent = category.name;
-    select.appendChild(option);
-  });
+
+  try {
+    const response = await fetch("http://localhost:5678/api/categories");
+    const data = await response.json();
+    data.forEach((category) => {
+      const option = document.createElement("option");
+      option.value = category.id;
+      option.textContent = category.name;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error displaying categories:", error);
+  }
 }
+
 showCategoriesModal();
 
-//// API functions post & delete ////
+//// API functions post & delete, using authentification token////
 
 const postImageAPI = async (e) => {
   e.preventDefault();
@@ -122,21 +121,18 @@ const postImageAPI = async (e) => {
       headers: { Authorization: `Bearer ${loggedIn.token}` },
     });
 
-    if (!response.ok) throw new Error("Erreur lors de l'envoi du fichier");
-
-    const data = await response.json();
-    console.log("File uploaded successfully:", data);
-
-    // Update local storage
-    const works = JSON.parse(localStorage.getItem("works")) || [];
-    works.push(data);
-    localStorage.setItem("works", JSON.stringify(works));
-
-    showImagesModal();
-    showImages();
-    goToGalleryPage();
+    const addedImage = await response.json();
+    if (response.ok) {
+      // Add the new image to the works' array and re-render the galleries
+      works.push(addedImage);
+      generateImages(works, "galleryContainer"); // Update the DOM
+      generateImagesModal(works, "modalGallery");
+      goToGalleryPage();
+    } else {
+      console.error("Failed to add image:", await response.text());
+    }
   } catch (error) {
-    console.error("Erreur:", error);
+    console.error("Error adding image:", error);
   }
 };
 
@@ -159,18 +155,21 @@ async function handleDeleteClick(e) {
       );
 
       if (response.ok) {
-        // Update local storage
-        let works = JSON.parse(localStorage.getItem("works"));
-        works = works.filter((work) => work.id !== parseInt(articleId));
-        localStorage.setItem("works", JSON.stringify(works));
+        const modalImageFigure = document.querySelector(
+          `figure[data-image-id="${articleId}"]`
+        );
+        if (modalImageFigure) {
+          modalImageFigure.remove();
+        }
 
         const imageElement = trashCan.closest("figure");
         if (imageElement) {
           imageElement.remove();
         }
 
-        showImagesModal();
-        showImages();
+        // Re-render the galleries
+        generateImages(works, "galleryContainer");
+        generateImagesModal(works, "modalGallery");
       } else {
         console.error("Error deleting image:", await response.text());
       }
@@ -223,3 +222,18 @@ document.getElementById("image").addEventListener("change", previewImage);
 document
   .getElementById("formAddPhoto")
   .addEventListener("submit", postImageAPI);
+
+// to turn the form button green only when the form is completed
+const turnButtonGreen = () => {
+  // are the fields empty?
+  if (titleInput.value.trim() !== "" && imageInput.files.length > 0) {
+    submitButton.style.backgroundColor = "#1d6154";
+  } else {
+    submitButton.style.backgroundColor = "#a7a7a7";
+  }
+};
+
+titleInput.addEventListener("input", turnButtonGreen);
+imageInput.addEventListener("change", turnButtonGreen);
+
+turnButtonGreen();
