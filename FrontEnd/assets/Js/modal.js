@@ -45,15 +45,6 @@ document
     }
   });
 
-// Event listener for closing the modal
-document.addEventListener("click", function (e) {
-  if (e.target === closeModalIcon || e.target === modalContainer) {
-    modalContainer.style.display = "none"; // Hide the modal
-    modalContainer.setAttribute("aria-hidden", "true");
-    modalContainer.removeAttribute("aria-modal");
-  }
-});
-
 // generate images
 async function generateImagesModal() {
   try {
@@ -108,6 +99,27 @@ async function showCategoriesModal() {
 }
 
 showCategoriesModal();
+
+// clear the form after uploading an image
+
+function clearForm() {
+  // Reset the form elements
+  const form = document.getElementById("formAddPhoto");
+  form.reset(); // Resets the entire form including text inputs, file inputs, etc.
+
+  // Reset the preview image and visibility
+  const previewImage = document.getElementById("previewImage");
+  previewImage.setAttribute("src", ""); // Clear the preview image
+  previewImage.style.display = "none"; // Hide the preview image div
+
+  // Show the icon and label again
+  document.querySelector(".container-add-photo").style.display = "flex";
+  document.querySelector(".previewImageDiv").style.display = "none";
+
+  // Reset the valider button color to grey
+  const submitButton = document.querySelector(".button-add-photo-form");
+  submitButton.style.backgroundColor = "#a7a7a7";
+}
 
 //// API functions post & delete, using authentification token////
 
@@ -193,32 +205,40 @@ function goToGalleryPage() {
   // Hide form, show gallery
   formContainer.classList.remove("active");
   galleryContainer.classList.add("active");
+  clearForm();
 }
 
 document
   .querySelector(".fa-arrow-left")
   .addEventListener("click", goToGalleryPage);
 
-//Preview the uploaded image before validating
+// Preview the uploaded image before validating
 function previewImage() {
-  const file = document.getElementById("image").files[0]; // Pour accéder aux éléments d'un tableau JSON, utilisez l'indice (0-indexé).
+  const file = document.getElementById("image").files[0]; // Get the selected file
   const reader = new FileReader();
 
   reader.onload = function (e) {
     // Set the preview image source to the file data
-    document
-      .getElementById("previewImage")
-      .setAttribute("src", e.target.result);
+    const previewImage = document.getElementById("previewImage");
+    previewImage.setAttribute("src", e.target.result);
+    previewImage.style.display = "block"; // Ensure the image is visible
+
+    // Hide the file input container and show the preview container
     document.querySelector(".container-add-photo").style.display = "none";
     document.querySelector(".previewImageDiv").style.display = "block";
   };
 
   if (file) {
     reader.readAsDataURL(file); // Start reading the file data
+  } else {
+    // If no file is selected, reset visibility states
+    document.querySelector(".container-add-photo").style.display = "flex";
+    document.querySelector(".previewImageDiv").style.display = "none";
   }
 }
 
 document.getElementById("image").addEventListener("change", previewImage);
+
 document
   .getElementById("formAddPhoto")
   .addEventListener("submit", postImageAPI);
@@ -237,3 +257,14 @@ titleInput.addEventListener("input", turnButtonGreen);
 imageInput.addEventListener("change", turnButtonGreen);
 
 turnButtonGreen();
+
+// Event listener for closing the modal
+document.addEventListener("click", function (e) {
+  if (e.target === closeModalIcon || e.target === modalContainer) {
+    modalContainer.style.display = "none"; // Hide the modal
+    modalContainer.setAttribute("aria-hidden", "true");
+    modalContainer.removeAttribute("aria-modal");
+    clearForm();
+    goToGalleryPage();
+  }
+});
