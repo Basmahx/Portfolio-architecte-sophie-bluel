@@ -103,13 +103,13 @@ showCategoriesModal();
 // clear the form after uploading an image
 
 function clearForm() {
-  // Reset the form elements
+  // Réinitialiser les éléments du formulaire
   const form = document.getElementById("formAddPhoto");
   form.reset(); // Resets the entire form including text inputs, file inputs, etc.
 
   // Reset the preview image and visibility
   const previewImage = document.getElementById("previewImage");
-  previewImage.setAttribute("src", ""); // Clear the preview image
+  previewImage.setAttribute("src", ""); // Clear the preview image // // Efface l'image de prévisualisation
   previewImage.style.display = "none"; // Hide the preview image div
 
   // Show the icon and label again
@@ -135,8 +135,8 @@ const postImageAPI = async (e) => {
 
     const addedImage = await response.json();
     if (response.ok) {
-      // Add the new image to the works' array and re-render the galleries
-      works.push(addedImage);
+      //re-render the galleries
+
       generateImages(works, "galleryContainer"); // Update the DOM
       generateImagesModal(works, "modalGallery");
       goToGalleryPage();
