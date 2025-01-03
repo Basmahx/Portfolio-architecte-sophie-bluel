@@ -1,5 +1,4 @@
-export let works = [];
-let categories = [];
+export let works = []; //pour manipuler les données de manière dynamique.
 
 export async function generateImages() {
   try {
@@ -41,6 +40,7 @@ async function generateFilters(categories) {
   const filterContainer = document.createElement("div");
   filterContainer.classList.add("filter-container");
 
+  // ajouté le bouton Tous
   const tous = document.createElement("button");
   tous.textContent = "Tous";
   tous.classList.add("filter-button");
@@ -80,8 +80,7 @@ async function showCategories() {
     // Fetch categories if the array is empty
     const response = await fetch("http://localhost:5678/api/categories");
     const data = await response.json();
-    categories = data;
-    generateFilters(categories); // Dynamically generate filters after fetching
+    generateFilters(data); // Dynamically generate filters after fetching
   } catch (error) {
     console.error("Error displaying categories:", error);
   }
